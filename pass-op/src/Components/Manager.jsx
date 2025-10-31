@@ -9,15 +9,11 @@ const Manager = () => {
   const [passwordArray, setPasswordArray] = useState([]);
 
   useEffect(() => {
-    let password = localStorage.getItem("password");
-    if (password) {
-      setPasswordArray(JSON.parse(password));
-    }
+    getPasswords();
   }, []);
 
   const showPassword = () => {
-    passwordRef.current.type = "text";
-    console.log(ref.current.src);
+    
     if (ref.current.src.includes("icons/eyecross.png")) {
       ref.current.src = "icons/eye.png";
       passwordRef.current.type = "text";
@@ -27,29 +23,78 @@ const Manager = () => {
     }
   };
 
-  const savePassword = () => {
-    setPasswordArray([...passwordArray, form]);
-    localStorage.setItem("password", JSON.stringify([...passwordArray, form]));
-    console.log([...passwordArray, form]);
-  };
-
   const handleChange = (e) => {
     setform({ ...form, [e.target.name]: e.target.value });
   };
 
-  const copyText = (text) => {
-    toast("copied to Clipboard", {
-      position: "top-right",
-      autoClose: 5000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-      theme: "light",
-    });
+    const copyText = (text) => {
+    toast("copied to Clipboard");
     navigator.clipboard.writeText(text);
-  };
+   };
+
+
+//save password to backend 
+  async function savePassword() {
+  const { site, username, password } = form;
+
+  if (!site || !username || !password) {
+    alert("Please fill all the fields");
+    return;
+  }
+
+  try {
+    const resp = await fetch("http://localhost:6001/api/passwords", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ site, username, password }),
+    });
+
+    const data = await resp.json();
+    alert(data.message);
+
+    // optional: refresh list or clear form
+    setform({ site: "", username: "", password: "" });
+    getPasswords();
+  } catch (err) {
+    console.error("❌ Error saving password:", err);
+  }
+}
+
+
+  async function getPasswords(){
+    try{
+       const resp = await fetch("http://localhost:6001/api/passwords");
+       const data = await resp.json();
+       setPasswordArray(data);
+    }
+    catch(err){
+      console.log("error fetching password :",err);
+    }
+  }
+   
+  
+//delete password
+  async function deletePassword(id){
+    try{
+      const resp = await fetch (`http://localhost:6001/api/passwords/${id}`,{
+        method:"DELETE",
+
+      });
+      const data = await resp.json();
+      alert(data.message);
+      getPasswords();
+    }
+    catch(error){
+      console.error("error deleting password",error);
+    }
+  }
+
+  window.onload = getPasswords;
+
+
+  
 
   return (
     <>
@@ -89,7 +134,7 @@ const Manager = () => {
             className="rounded-full border border-green-500 w-full p-4 py-1"
             type="text"
             name="site"
-            id=""
+            
           />
           <div className="flex w-full justify-between gap-8 ">
             <input
@@ -99,7 +144,7 @@ const Manager = () => {
               className="rounded-full border border-green-500 w-full p-4 py-1"
               type="text"
               name="username"
-              id=""
+              
             />
             <div className="relative">
               <input
@@ -108,9 +153,9 @@ const Manager = () => {
                 onChange={handleChange}
                 placeholder="Enter Password"
                 className="rounded-full border border-green-500 w-full p-4 py-1"
-                type="pssword"
+                type="password"
                 name="password"
-                id=""
+                
               />
               <span
                 className="absolute right-[3px] top-[4px] cursor-pointer "
@@ -149,6 +194,7 @@ const Manager = () => {
                   <th className="py-2">Site</th>
                   <th className="py-2">Username</th>
                   <th className="py-2">Password</th>
+                   <th className="py-2">Action</th>
                 </tr>
               </thead>
               <tbody className="bg-green-100 ">
@@ -156,7 +202,7 @@ const Manager = () => {
                   return (
                     <tr>
                       <td className=" py-2 border border-white text-center w-32">
-                        <a href="{items.site}" target="_blank">
+                        <a href={items.site} target="_blank">
                           {items.site}
                         </a>
                         <div
@@ -178,14 +224,22 @@ const Manager = () => {
                         </div>
                       </td>
                       <td className=" py-2 border border-white  text-center w-32">
-                        <a href="{items.username}" target="_blank">
+                        <a href={items.username} target="_blank">
                           {items.username}
                         </a>{" "}
                       </td>
                       <td className=" py-2 border border-white  text-center w-32">
-                        <a href="{items.password}" target="_blank">
+                        <a href={items.password} target="_blank">
                           {items.password}
                         </a>
+                      </td>
+                      <td className="py-2 border border-white text-center w-32">
+                       <button
+                        onClick={() => deletePassword(items.id)} 
+                        className="bg-red-500 hover:bg-red-600 text-white rounded-full px-4 py-1"
+                        >
+                          Delete
+                      </button>
                       </td>
                     </tr>
                   );

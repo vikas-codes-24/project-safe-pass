@@ -1,253 +1,198 @@
-import React from "react";
-import { useRef, useState, useEffect } from "react";
-import { ToastContainer, toast } from "react-toastify";
+import React, { useRef, useState, useEffect } from "react";
 
 const Manager = () => {
   const ref = useRef();
-  const passwordRef = useRef();
-  const [form, setform] = useState({ site: "", username: "", password: "" });
+
+  const [form, setform] = useState({
+    siteUrl: "",
+    username: "",
+    password: "",
+  });
+
   const [passwordArray, setPasswordArray] = useState([]);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [showPasswords, setShowPasswords] = useState(false);
 
   useEffect(() => {
-    getPasswords();
+    fetchPassword();
   }, []);
 
-  const showPassword = () => {
-    
-    if (ref.current.src.includes("icons/eyecross.png")) {
-      ref.current.src = "icons/eye.png";
-      passwordRef.current.type = "text";
+  const fetchPassword = async () => {
+    const token = localStorage.getItem("token");
+
+    const res = await fetch("http://localhost:4000/password", {
+      headers: {
+        authorization: token,
+      },
+    });
+
+    const data = await res.json();
+
+    if (Array.isArray(data)) {
+      setPasswordArray(data);
     } else {
-      ref.current.src = "icons/eyecross.png";
-      passwordRef.current.type = "password";
+      setPasswordArray([]);
     }
   };
 
   const handleChange = (e) => {
-    setform({ ...form, [e.target.name]: e.target.value });
+    setform({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
   };
 
-    const copyText = (text) => {
-    toast("copied to Clipboard");
-    navigator.clipboard.writeText(text);
-   };
+  const savePassword = async () => {
+    const token = localStorage.getItem("token");
 
+    if (!token) {
+      setError("Please login first to save passwords.");
 
-//save password to backend 
-  async function savePassword() {
-  const { site, username, password } = form;
+      setTimeout(() => {
+        setError("");
+      }, 3000);
 
-  if (!site || !username || !password) {
-    alert("Please fill all the fields");
-    return;
-  }
+      return;
+    }
 
-  try {
-    const resp = await fetch("http://localhost:6001/api/passwords", {
+    setError("");
+
+    const res = await fetch("http://localhost:4000/password", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
+        "content-type": "application/json",
+        authorization: token,
       },
-      body: JSON.stringify({ site, username, password }),
+      body: JSON.stringify(form),
     });
 
-    const data = await resp.json();
-    alert(data.message);
+    const data = await res.json();
 
-    // optional: refresh list or clear form
-    setform({ site: "", username: "", password: "" });
-    getPasswords();
-  } catch (err) {
-    console.error("❌ Error saving password:", err);
-  }
-}
+    console.log(data);
 
+    setMessage("Password Saved Successfully!");
 
-  async function getPasswords(){
-    try{
-       const resp = await fetch("http://localhost:6001/api/passwords");
-       const data = await resp.json();
-       setPasswordArray(data);
+    setTimeout(() => {
+      setMessage("");
+    }, 2000);
+
+    fetchPassword();
+
+    setform({
+      siteUrl: "",
+      username: "",
+      password: "",
+    });
+  };
+
+  const handleDelete = async (id) => {
+    const token = localStorage.getItem("token");
+
+    const response = await fetch(
+      `http://localhost:4000/password/${id}`,
+      {
+        method: "DELETE",
+        headers: {
+          "content-type": "application/json",
+          authorization: token,
+        },
+      }
+    );
+
+    if (response.ok) {
+      setPasswordArray(
+        passwordArray.filter((pass) => pass._id !== id)
+      );
+
+      setMessage("Password Deleted Successfully!");
+
+      setTimeout(() => {
+        setMessage("");
+      }, 2000);
     }
-    catch(err){
-      console.log("error fetching password :",err);
-    }
-  }
-   
-  
-//delete password
-  async function deletePassword(id){
-    try{
-      const resp = await fetch (`http://localhost:6001/api/passwords/${id}`,{
-        method:"DELETE",
+  };
 
-      });
-      const data = await resp.json();
-      alert(data.message);
-      getPasswords();
-    }
-    catch(error){
-      console.error("error deleting password",error);
-    }
-  }
+  const copyText = async (text) => {
+    await navigator.clipboard.writeText(text);
 
-  window.onload = getPasswords;
+    setMessage("Copied Successfully!");
 
-
-  
+    setTimeout(() => {
+      setMessage("");
+    }, 2000);
+  };
 
   return (
     <>
-      <ToastContainer
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="light"
-        transition="bounce"
-      />
-      {/* Same as */}
-      <ToastContainer />
       <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]">
         <div className="absolute left-0 right-0 top-0 -z-10 m-auto h-[310px] w-[310px] rounded-full bg-green-400 opacity-20 blur-[100px]"></div>
       </div>
-      <div className=" mycontainer">
-        <h1 className="text-4xl text font-bold text-center">
+
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        <h1 className="text-5xl font-bold text-center">
           <span className="text-green-500">&lt;</span>
-          <span>safe</span>
+          safe
           <span className="text-green-500">PASS/&gt;</span>
         </h1>
-        <p className="text-green-900 text-lg text-center">
+
+        <p className="text-green-900 text-lg text-center mt-2">
           Your own password manager
         </p>
 
-        <div className=" flex flex-col p-4 text-black gap-8 items-center">
+        {/* Form Card */}
+        <div className="bg-white shadow-xl rounded-2xl p-8 mt-8 flex flex-col gap-6">
           <input
-            value={form.site}
+            value={form.siteUrl}
             onChange={handleChange}
             placeholder="Enter Website URL"
-            className="rounded-full border border-green-500 w-full p-4 py-1"
+            className="rounded-xl border border-green-500 w-full p-3 focus:outline-none focus:ring-2 focus:ring-green-500"
             type="text"
-            name="site"
-            
+            name="siteUrl"
           />
-          <div className="flex w-full justify-between gap-8 ">
+
+          <div className="grid md:grid-cols-2 gap-4">
             <input
               value={form.username}
               onChange={handleChange}
               placeholder="Enter Username"
-              className="rounded-full border border-green-500 w-full p-4 py-1"
+              className="rounded-xl border border-green-500 w-full p-3 focus:outline-none focus:ring-2 focus:ring-green-500"
               type="text"
               name="username"
-              
             />
-            <div className="relative">
-              <input
-                ref={passwordRef}
-                value={form.password}
-                onChange={handleChange}
-                placeholder="Enter Password"
-                className="rounded-full border border-green-500 w-full p-4 py-1"
-                type="password"
-                name="password"
-                
-              />
-              <span
-                className="absolute right-[3px] top-[4px] cursor-pointer "
-                onClick={showPassword}
-              >
-                <img
-                  ref={ref}
-                  className="p-1"
-                  width={26}
-                  src="icons/eye.png"
-                  alt="eye"
-                />
-              </span>
-            </div>
+
+            <input
+              value={form.password}
+              onChange={handleChange}
+              placeholder="Enter Password"
+              className="rounded-xl border border-green-500 w-full p-3 focus:outline-none focus:ring-2 focus:ring-green-500"
+              type="password"
+              name="password"
+            />
           </div>
+
+          {error && (
+            <p className="text-red-600 font-semibold text-sm">
+              {error}
+            </p>
+          )}
+
+          {message && (
+            <p className="text-green-600 font-semibold text-sm">
+              {message}
+            </p>
+          )}
 
           <button
             onClick={savePassword}
-            className="flex justify-center items-center gap-2 bg-green-600 hover:bg-green-500 rounded-full px-8 py-2 w-fit border border-green-900"
+            className="bg-green-600 hover:bg-green-700 text-white font-semibold px-8 py-3 rounded-xl transition w-fit"
           >
-            <lord-icon
-              src="https://cdn.lordicon.com/jgnvfzqg.json"
-              trigger="hover"
-            ></lord-icon>
             Add Password
           </button>
         </div>
 
-        <div className="password">
-          <h2 className="font-bold text-2xl py-4">Your's Passwords</h2>
-          {passwordArray.length === 0 && <div>No Password to Show.</div>}
-          {passwordArray.length != 0 && (
-            <table className="table-auto w-full rounded-md overflow-hidden">
-              <thead className="bg-green-800 text-white">
-                <tr>
-                  <th className="py-2">Site</th>
-                  <th className="py-2">Username</th>
-                  <th className="py-2">Password</th>
-                   <th className="py-2">Action</th>
-                </tr>
-              </thead>
-              <tbody className="bg-green-100 ">
-                {passwordArray.map((items) => {
-                  return (
-                    <tr>
-                      <td className=" py-2 border border-white text-center w-32">
-                        <a href={items.site} target="_blank">
-                          {items.site}
-                        </a>
-                        <div
-                          className="lordiconcopy size-7 cursor-pointer "
-                          onClick={() => {
-                            copyText(items.site);
-                          }}
-                        >
-                          <lord-icon
-                            style={{
-                              width: "25px",
-                              height: "25px",
-                              paddingTop: "3px",
-                              paddingLeft: "3px",
-                            }}
-                            src="https://cdn.lordicon.com/lyrrgrsl.json"
-                            trigger="hover"
-                          ></lord-icon>
-                        </div>
-                      </td>
-                      <td className=" py-2 border border-white  text-center w-32">
-                        <a href={items.username} target="_blank">
-                          {items.username}
-                        </a>{" "}
-                      </td>
-                      <td className=" py-2 border border-white  text-center w-32">
-                        <a href={items.password} target="_blank">
-                          {items.password}
-                        </a>
-                      </td>
-                      <td className="py-2 border border-white text-center w-32">
-                       <button
-                        onClick={() => deletePassword(items.id)} 
-                        className="bg-red-500 hover:bg-red-600 text-white rounded-full px-4 py-1"
-                        >
-                          Delete
-                      </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
-        </div>
+
+
       </div>
     </>
   );

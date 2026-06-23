@@ -1,26 +1,19 @@
-// server.js
 const express = require("express");
 const cors = require("cors");
-const bodyParser = require("body-parser");
-const dotenv = require("dotenv");
-const passwordRoutes = require("./routes/passwordRoutes"); // 👈 import your routes file
-const db = require("./db.js"); // 👈 your MySQL connection file
+const mongoose = require("mongoose");
+const passRoute = require("./routes/pass");
+const authRoute = require("./routes/auth");
+const { connectMongoDb } = require("./connection");
+const PORT = 4000;
 
-dotenv.config();
+connectMongoDb("mongodb://127.0.0.1:27017/password-manager").then(() =>
+  console.log("MongoDB connected"),
+);
 const app = express();
 
-// Middlewares
 app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json());
+app.use("/password", passRoute);
+app.use("/auth", authRoute);
 
-// Routes
-app.use("/api/passwords", passwordRoutes);
-
-// Test route (optional)
-app.get("/", (req, res) => {
-  res.send("✅ SafePass Backend is running!");
-});
-
-// Server
-const PORT = 6001;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`SERVER STARTED AT PORT : ${PORT}`));

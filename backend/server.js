@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
@@ -6,7 +7,7 @@ const authRoute = require("./routes/auth");
 const { connectMongoDb } = require("./connection");
 const PORT = 4000;
 
-connectMongoDb("mongodb://127.0.0.1:27017/password-manager").then(() =>
+connectMongoDb(process.env.MONGO_URL).then(() =>
   console.log("MongoDB connected"),
 );
 const app = express();

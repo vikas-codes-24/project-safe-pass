@@ -19,7 +19,7 @@ function SignupModal({ closeModal, setShowLogin }) {
 
     const handleSignup = async () => {
         setLoading(true);
-        const res = await fetch("http://localhost:4000/auth/signup", {
+        const res = await fetch("https://backend-safe-pass.onrender.com/auth/signup", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

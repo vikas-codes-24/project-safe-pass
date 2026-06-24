@@ -21,7 +21,7 @@ const Manager = () => {
   const fetchPassword = async () => {
     const token = localStorage.getItem("token");
 
-    const res = await fetch("http://localhost:4000/password", {
+    const res = await fetch("https://backend-safe-pass.onrender.com/password", {
       headers: {
         authorization: token,
       },
@@ -58,7 +58,7 @@ const Manager = () => {
 
     setError("");
 
-    const res = await fetch("http://localhost:4000/password", {
+    const res = await fetch("https://backend-safe-pass.onrender.com/password", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -90,7 +90,7 @@ const Manager = () => {
     const token = localStorage.getItem("token");
 
     const response = await fetch(
-      `http://localhost:4000/password/${id}`,
+      `https://backend-safe-pass.onrender.com/password/${id}`,
       {
         method: "DELETE",
         headers: {

@@ -12,7 +12,7 @@ function Dashboard() {
     const fetchPasswords = async () => {
         const token = localStorage.getItem("token");
 
-        const res = await fetch("http://localhost:4000/password", {
+        const res = await fetch("https://backend-safe-pass.onrender.com/password", {
             headers: {
                 authorization: token,
             },
@@ -39,7 +39,7 @@ function Dashboard() {
         const token = localStorage.getItem("token");
 
         const response = await fetch(
-            `http://localhost:4000/password/${id}`,
+            `https://backend-safe-pass.onrender.com/password/${id}`,
             {
                 method: "DELETE",
                 headers: {

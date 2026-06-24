@@ -12,7 +12,11 @@ connectMongoDb(process.env.MONGO_URL).then(() =>
 );
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "https://safe-pass-sand.vercel.app/",
+  }),
+);
 app.use(express.json());
 app.use("/password", passRoute);
 app.use("/auth", authRoute);
